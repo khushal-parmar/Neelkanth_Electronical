@@ -130,7 +130,7 @@ include 'includes/header.php';
                 <button type="submit" class="btn-auth">Login</button>
             </form>
 
-            <small class="text-muted">Don't have an account? <a href="register.php" class="text-decoration-none fw-bold">Create Account</a></small>
+            <small class="text-muted">Don't have an account? <a href="user-register.php" class="text-decoration-none fw-bold">Create Account</a></small>
             <div class="text-center mt-3">
 </div>
      

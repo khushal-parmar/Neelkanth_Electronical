@@ -7,7 +7,7 @@ require_once 'config/db.php';
 <style>
     .hero-section {
         background-color: #f1f3f6;
-        min-height: 590px;
+        min-height: 580px;
         display: flex;
         align-items: center;
         position: relative;
@@ -21,21 +21,26 @@ require_once 'config/db.php';
         width: 100%;
         height: 100%;
         object-fit: cover;
-        object-position: right center;
+        object-position: center right;
         z-index: 1;
+    }
+
+    .hero-overlay {
+        display: none;
     }
 
     .hero-content {
         position: relative;
-        z-index: 2;
-        max-width: 520px;
+        z-index: 3;
+        max-width: 480px;
+        padding-left: 15px;
     }
 
     .hero-title {
         color: #1e293b;
         font-size: 2.75rem;
         font-weight: 800;
-        line-height: 1.2;
+        line-height: 1.25;
         letter-spacing: -0.5px;
     }
 
@@ -48,7 +53,7 @@ require_once 'config/db.php';
 
     .btn-shop-now {
         background-color: #2563eb;
-        color: #ffffff;
+        color: #ffffff !important;
         font-weight: 600;
         padding: 12px 32px;
         border-radius: 6px;
@@ -60,7 +65,7 @@ require_once 'config/db.php';
 
     .btn-shop-now:hover {
         background-color: #1d4ed8;
-        color: #ffffff;
+        color: #ffffff !important;
         transform: translateY(-2px);
     }
 
@@ -97,7 +102,7 @@ require_once 'config/db.php';
     .category-card {
         background: #ffffff;
         border-radius: 12px;
-        padding: 30px 20px 20px;
+        padding: 25px 15px 15px;
         text-align: center;
         border: 1px solid #f1f5f9;
         box-shadow: 0 2px 10px rgba(0, 0, 0, 0.03);
@@ -150,7 +155,7 @@ require_once 'config/db.php';
 
     .btn-view-products:hover {
         background-color: #2563eb;
-        color: #ffffff;
+        color: #ffffff !important;
     }
 
     .why-us-section {
@@ -195,18 +200,86 @@ require_once 'config/db.php';
         margin-bottom: 0;
     }
 
-    @media (max-width: 991px) {
-        .hero-title { font-size: 2.1rem; }
-        .hero-section { min-height: 420px; padding: 40px 0; }
+    /* Laptop Responsive */
+    @media (min-width: 992px) and (max-width: 1400px) {
+        .hero-section {
+            min-height: 520px !important;
+        }
+        .hero-content {
+            max-width: 420px !important;
+            padding-left: 20px !important;
+        }
+        .hero-title {
+            font-size: 2.3rem !important;
+        }
+        .hero-subtitle {
+            font-size: 0.95rem !important;
+        }
+    }
+
+    /* Mobile Responsive Customization */
+    @media (max-width: 767px) {
+        .hero-section { 
+            min-height: 380px !important; 
+            padding: 40px 0 !important; 
+        }
+        .hero-bg-img {
+            object-position: center !important;
+        }
+        .hero-overlay {
+            display: block !important;
+            position: absolute !important;
+            top: 0 !important;
+            left: 0 !important;
+            width: 100% !important;
+            height: 100% !important;
+            background: rgba(255, 255, 255, 0.82) !important;
+            z-index: 2 !important;
+        }
+        .hero-content {
+            text-align: center !important;
+            margin: 0 auto !important;
+            max-width: 100% !important;
+            padding-left: 0 !important;
+        }
+        .hero-title { 
+            font-size: 1.8rem !important; 
+        }
+        .hero-subtitle {
+            font-size: 0.9rem !important;
+            margin-top: 10px !important;
+            margin-bottom: 20px !important;
+        }
+        .category-section, .why-us-section {
+            padding: 35px 0 !important;
+        }
+        .category-img-wrapper {
+            height: 120px !important;
+        }
+        .category-card {
+            padding: 15px 10px 12px !important;
+        }
+        .category-name {
+            font-size: 0.95rem !important;
+            margin-bottom: 10px !important;
+        }
+        .btn-view-products {
+            font-size: 0.8rem !important;
+            padding: 6px 0 !important;
+        }
+        .feature-card {
+            padding: 20px 15px !important;
+        }
     }
 </style>
 
 <section class="hero-section">
-    <img src="assets/images/hero-banner.png" alt="Quality Electronics" class="hero-bg-img">
+    <img src="assets/images/hero-banner.png" alt="Quality Electronics" class="hero-bg-img" onerror="this.src='assets/images/hero-banner.jpg';">
+    <div class="hero-overlay"></div>
     
     <div class="container position-relative">
         <div class="row">
-            <div class="col-lg-6">
+            <div class="col-xl-5 col-lg-5 col-md-8">
                 <div class="hero-content">
                     <h1 class="hero-title">Quality Electronics For Better Living</h1>
                     <p class="hero-subtitle">Find the best range of home appliances at affordable prices.</p>
@@ -219,31 +292,56 @@ require_once 'config/db.php';
 
 <section class="category-section">
     <div class="container">
-        <div class="mb-4">
+        <div class="mb-4 text-sm-start text-center">
             <h2 class="section-title">Shop By Category</h2>
         </div>
 
-        <div class="row g-4">
+        <div class="row g-3 g-md-4">
             <?php
-            $categories = ['Blender', 'Mixer Grinder', 'Fan', 'Iron'];
+            $categories = [
+                [
+                    'name' => 'Blender', 
+                    'file' => 'blender',
+                    'fallback' => 'https://m.media-amazon.com/images/I/61S3yB9S7LL._SL1500_.jpg'
+                ],
+                [
+                    'name' => 'Mixer Grinder', 
+                    'file' => 'mixer',
+                    'fallback' => 'https://m.media-amazon.com/images/I/61NfTee8x-L._SL1200_.jpg'
+                ],
+                [
+                    'name' => 'Fan', 
+                    'file' => 'fan',
+                    'fallback' => 'https://m.media-amazon.com/images/I/61aMvFClc1L._SL1500_.jpg'
+                ],
+                [
+                    'name' => 'Iron', 
+                    'file' => 'iron',
+                    'fallback' => 'https://m.media-amazon.com/images/I/71P4qZ1wQXL._SL1500_.jpg'
+                ]
+            ];
 
-            foreach ($categories as $cat_name):
-                $stmt = $conn->prepare("SELECT image FROM products WHERE category = ? AND image != '' ORDER BY id DESC LIMIT 1");
-                $stmt->bind_param("s", $cat_name);
-                $stmt->execute();
-                $result = $stmt->get_result();
-                $product = $result->fetch_assoc();
+            foreach ($categories as $cat):
+                $cat_name = $cat['name'];
+                $cat_file = $cat['file'];
+                $cat_fallback = $cat['fallback'];
 
-                if ($product && !empty($product['image']) && file_exists('uploads/' . $product['image'])) {
-                    $cat_img = 'uploads/' . $product['image'];
-                } else {
-                    $cat_img = 'https://via.placeholder.com/200?text=' . urlencode($cat_name);
+                $cat_img = $cat_fallback;
+                if (file_exists("assets/images/{$cat_file}.png")) {
+                    $cat_img = "assets/images/{$cat_file}.png";
+                } elseif (file_exists("assets/images/{$cat_file}.jpg")) {
+                    $cat_img = "assets/images/{$cat_file}.jpg";
+                } elseif (file_exists("assets/images/{$cat_file}.jpeg")) {
+                    $cat_img = "assets/images/{$cat_file}.jpeg";
                 }
             ?>
-                <div class="col-xl-3 col-lg-3 col-md-6 col-sm-6">
+                <div class="col-xl-3 col-lg-3 col-md-6 col-6">
                     <div class="category-card">
                         <div class="category-img-wrapper">
-                            <img src="<?php echo $cat_img; ?>" alt="<?php echo htmlspecialchars($cat_name); ?>" class="img-fluid">
+                            <img src="<?php echo $cat_img; ?>" 
+                                 onerror="this.onerror=null; this.src='<?php echo $cat_fallback; ?>';" 
+                                 alt="<?php echo htmlspecialchars($cat_name); ?>" 
+                                 class="img-fluid">
                         </div>
                         <div>
                             <h3 class="category-name"><?php echo htmlspecialchars($cat_name); ?></h3>
@@ -258,12 +356,12 @@ require_once 'config/db.php';
 
 <section class="why-us-section">
     <div class="container">
-        <div class="text-center mb-5">
+        <div class="text-center mb-4 mb-md-5">
             <h2 class="section-title section-title-center">Why Choose Us?</h2>
         </div>
 
-        <div class="row g-4">
-            <div class="col-lg-3 col-md-6">
+        <div class="row g-3 g-md-4">
+            <div class="col-lg-3 col-md-6 col-12">
                 <div class="feature-card">
                     <div class="feature-icon-circle">
                         <i class="fa-solid fa-shield-halved"></i>
@@ -273,7 +371,7 @@ require_once 'config/db.php';
                 </div>
             </div>
 
-            <div class="col-lg-3 col-md-6">
+            <div class="col-lg-3 col-md-6 col-12">
                 <div class="feature-card">
                     <div class="feature-icon-circle">
                         <i class="fa-solid fa-indian-rupee-sign"></i>
@@ -283,7 +381,7 @@ require_once 'config/db.php';
                 </div>
             </div>
 
-            <div class="col-lg-3 col-md-6">
+            <div class="col-lg-3 col-md-6 col-12">
                 <div class="feature-card">
                     <div class="feature-icon-circle">
                         <i class="fa-solid fa-wrench"></i>
@@ -293,7 +391,7 @@ require_once 'config/db.php';
                 </div>
             </div>
 
-            <div class="col-lg-3 col-md-6">
+            <div class="col-lg-3 col-md-6 col-12">
                 <div class="feature-card">
                     <div class="feature-icon-circle">
                         <i class="fa-solid fa-headset"></i>

@@ -1,4 +1,5 @@
 <?php 
+require_once 'auth_check.php';
 require_once '../config/db.php';
 include 'sidebar.php'; 
 
@@ -22,11 +23,11 @@ $inquiries = $conn->query("SELECT * FROM inquiries ORDER BY id DESC");
             <tbody>
                 <?php while($row = $inquiries->fetch_assoc()): ?>
                     <tr>
-                        <td><?php echo $row['name']; ?></td>
-                        <td><?php echo $row['email']; ?></td>
-                        <td><?php echo $row['phone']; ?></td>
-                        <td><?php echo $row['message']; ?></td>
-                        <td><?php echo $row['created_at']; ?></td>
+                        <td><?php echo htmlspecialchars($row['name']); ?></td>
+                        <td><?php echo htmlspecialchars($row['email']); ?></td>
+                        <td><?php echo htmlspecialchars($row['phone']); ?></td>
+                        <td><?php echo htmlspecialchars($row['message']); ?></td>
+                        <td><?php echo htmlspecialchars($row['created_at']); ?></td>
                     </tr>
                 <?php endwhile; ?>
             </tbody>

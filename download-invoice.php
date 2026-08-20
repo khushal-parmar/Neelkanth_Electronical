@@ -1,104 +1,253 @@
 <?php
-session_start();
-require_once 'config/db.php';
-
-if (!isset($_SESSION['user_id']) || !isset($_GET['id'])) {
-    die("Unauthorized Access");
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
 }
 
-$order_id = $_GET['id'];
-$user_id = $_SESSION['user_id'];
+require_once 'config/db.php';
 
-// Fetch Order Details
-$stmt = $conn->prepare("SELECT * FROM orders WHERE id = ? AND user_id = ?");
-$stmt->bind_param("ii", $order_id, $user_id);
+if (!isset($_GET['id'])) {
+    exit('Order ID is required.');
+}
+
+$order_id = intval($_GET['id']);
+
+$stmt = $conn->prepare("SELECT orders.*, users.name as customer_name, users.phone as customer_phone, users.email as customer_email 
+                       FROM orders 
+                       LEFT JOIN users ON orders.user_id = users.id 
+                       WHERE orders.id = ?");
+$stmt->bind_param("i", $order_id);
 $stmt->execute();
 $order = $stmt->get_result()->fetch_assoc();
 
 if (!$order) {
-    die("Order not found");
+    exit('Order not found.');
 }
 
-// Fetch Order Items
-$item_stmt = $conn->prepare("SELECT * FROM order_items WHERE order_id = ?");
+$order_number = !empty($order['order_number']) ? $order['order_number'] : '#ORD-' . strtoupper(substr(md5($order_id), 0, 8));
+
+$item_stmt = $conn->prepare("SELECT oi.*, p.name AS product_name 
+                             FROM order_items oi 
+                             JOIN products p ON oi.product_id = p.id 
+                             WHERE oi.order_id = ?");
 $item_stmt->bind_param("i", $order_id);
 $item_stmt->execute();
 $items = $item_stmt->get_result();
 
-$order_number = !empty($order['order_number']) ? $order['order_number'] : '#' . strtoupper(substr(md5($order_id), 0, 8));
+$subtotal = 0;
+$total_cgst = 0;
+$total_sgst = 0;
+$grand_total = 0;
 ?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Invoice - <?php echo $order_number; ?></title>
+    <title>Invoice - <?php echo htmlspecialchars($order_number); ?></title>
     <style>
-        body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; color: #333; margin: 0; padding: 40px; background: #fff; }
-        .invoice-box { max-width: 800px; margin: auto; border: 1px solid #eee; padding: 30px; box-shadow: 0 0 10px rgba(0, 0, 0, 0.05); }
-        .invoice-header { display: flex; justify-content: space-between; border-bottom: 2px solid #2563eb; padding-bottom: 20px; margin-bottom: 20px; }
-        .company-title { font-size: 24px; font-weight: bold; color: #2563eb; }
-        .invoice-title { font-size: 20px; font-weight: bold; text-align: right; }
-        .details-table { width: 100%; margin-bottom: 30px; }
-        .details-table td { vertical-align: top; }
-        .items-table { width: 100%; border-collapse: collapse; margin-bottom: 30px; }
-        .items-table th { background: #f8fafc; border: 1px solid #e2e8f0; padding: 10px; text-align: left; }
-        .items-table td { border: 1px solid #e2e8f0; padding: 10px; }
-        .total-box { text-align: right; font-size: 18px; font-weight: bold; }
-        .print-btn { background: #2563eb; color: #fff; border: none; padding: 10px 20px; font-size: 14px; border-radius: 5px; cursor: pointer; margin-bottom: 20px; }
-        @media print { .no-print { display: none; } }
+        body {
+            font-family: Arial, sans-serif;
+            color: #333;
+            margin: 0;
+            padding: 20px;
+            background: #fff;
+        }
+        .invoice-box {
+            max-width: 800px;
+            margin: auto;
+            border: 1px solid #eee;
+            padding: 30px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.15);
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 20px;
+            margin-bottom: 20px;
+        }
+        .company-details h2 {
+            margin: 0 0 5px 0;
+            color: #0f172a;
+            font-size: 24px;
+        }
+        .company-details p {
+            margin: 2px 0;
+            font-size: 13px;
+            color: #555;
+        }
+        .title-box {
+            text-align: right;
+        }
+        .title-box h3 {
+            margin: 0 0 10px 0;
+            font-size: 20px;
+            color: #2563eb;
+            text-transform: uppercase;
+        }
+        .title-box p {
+            margin: 3px 0;
+            font-size: 13px;
+        }
+        .billed-to {
+            margin-bottom: 25px;
+        }
+        .billed-to h4 {
+            margin: 0 0 5px 0;
+            font-size: 14px;
+            color: #888;
+            text-transform: uppercase;
+        }
+        .billed-to p {
+            margin: 2px 0;
+            font-size: 14px;
+            font-weight: bold;
+        }
+        .billed-to span {
+            display: block;
+            font-weight: normal;
+            font-size: 13px;
+            color: #555;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        table th {
+            background: #f8fafc;
+            color: #475569;
+            text-align: left;
+            padding: 10px;
+            font-size: 13px;
+            border-bottom: 2px solid #e2e8f0;
+        }
+        table td {
+            padding: 10px;
+            border-bottom: 1px solid #eee;
+            font-size: 13px;
+        }
+        .summary-table {
+            width: 300px;
+            margin-left: auto;
+            border-collapse: collapse;
+        }
+        .summary-table td {
+            padding: 6px 10px;
+            border: none;
+        }
+        .summary-table .grand-total {
+            font-weight: bold;
+            font-size: 16px;
+            color: #0f172a;
+            border-top: 2px solid #0f172a;
+        }
+        .footer {
+            margin-top: 40px;
+            text-align: center;
+            font-size: 13px;
+            color: #777;
+            border-top: 1px solid #eee;
+            padding-top: 15px;
+        }
+        @media print {
+            body { padding: 0; }
+            .invoice-box { border: none; box-shadow: none; }
+            .no-print { display: none; }
+        }
     </style>
 </head>
 <body>
 
-<div class="no-print" style="text-align: center;">
-    <button onclick="window.print()" class="print-btn">Print / Save as PDF</button>
+<div class="no-print" style="text-align: center; margin-bottom: 20px;">
+    <button onclick="window.print()" style="padding: 10px 20px; font-size: 14px; background: #2563eb; color: #fff; border: none; border-radius: 5px; cursor: pointer;">
+        Print Invoice
+    </button>
 </div>
 
 <div class="invoice-box">
-    <div class="invoice-header">
-        <div>
-            <div class="company-title">Neelkanth Electricals</div>
-            <p style="margin: 5px 0; color: #666;">Quality Home Appliances</p>
+    <div class="header">
+        <div class="company-details">
+            <h2>Neelkanth</h2>
+            <p>123, Main Road, Jamnagar, Gujarat - 361001</p>
+            <p>Phone: +91 98765 43210 | Email: neelkanth@gmail.com</p>
         </div>
-        <div>
-            <div class="invoice-title">INVOICE</div>
-            <p style="margin: 5px 0;">Order: <strong><?php echo htmlspecialchars($order_number); ?></strong></p>
-            <p style="margin: 0; color: #666;">Date: <?php echo date('d M Y', strtotime($order['created_at'])); ?></p>
+        <div class="title-box">
+            <h3>PURCHASE ORDER</h3>
+            <p><strong>Order ID:</strong> <?php echo htmlspecialchars($order_number); ?></p>
+            <p><strong>Date:</strong> <?php echo date('j M Y, g:i a', strtotime($order['created_at'])); ?></p>
         </div>
     </div>
 
-    <table class="items-table">
+    <div class="billed-to">
+        <h4>BILLED TO:</h4>
+        <p><?php echo htmlspecialchars($order['customer_name'] ?? 'N/A'); ?></p>
+        <span><?php echo htmlspecialchars($order['address'] ?? ''); ?></span>
+        <span><?php echo htmlspecialchars($order['customer_email'] ?? ''); ?></span>
+        <span>+91 <?php echo htmlspecialchars($order['customer_phone'] ?? ''); ?></span>
+    </div>
+
+    <table>
         <thead>
             <tr>
                 <th>Item</th>
-                <th>Price</th>
                 <th>Qty</th>
-                <th>Subtotal</th>
+                <th>Price</th>
+                <th>Total</th>
+                <th>CGST (9%)</th>
+                <th>SGST (9%)</th>
+                <th>Net Total</th>
             </tr>
         </thead>
         <tbody>
-            <?php while ($item = $items->fetch_assoc()): ?>
-                <tr>
-                    <td><?php echo htmlspecialchars($item['product_name']); ?></td>
-                    <td>₹<?php echo number_format($item['price'], 2); ?></td>
-                    <td><?php echo $item['quantity']; ?></td>
-                    <td>₹<?php echo number_format($item['price'] * $item['quantity'], 2); ?></td>
-                </tr>
+            <?php while ($item = $items->fetch_assoc()): 
+                $item_price = $item['price'];
+                $qty = $item['quantity'];
+                $item_total = $item_price * $qty;
+                $cgst = $item_total * 0.09;
+                $sgst = $item_total * 0.09;
+                $net_total = $item_total + $cgst + $sgst;
+
+                $subtotal += $item_total;
+                $total_cgst += $cgst;
+                $total_sgst += $sgst;
+                $grand_total += $net_total;
+            ?>
+            <tr>
+                <td><?php echo htmlspecialchars($item['product_name']); ?></td>
+                <td><?php echo $qty; ?></td>
+                <td>Rs. <?php echo number_format($item_price, 0); ?></td>
+                <td>Rs. <?php echo number_format($item_total, 0); ?></td>
+                <td>Rs. <?php echo number_format($cgst, 0); ?></td>
+                <td>Rs. <?php echo number_format($sgst, 0); ?></td>
+                <td>Rs. <?php echo number_format($net_total, 0); ?></td>
+            </tr>
             <?php endwhile; ?>
         </tbody>
     </table>
 
-    <div class="total-box">
-        Total Amount: ₹<?php echo number_format($order['total_amount'], 2); ?>
+    <table class="summary-table">
+        <tr>
+            <td>Subtotal</td>
+            <td style="text-align: right;">Rs. <?php echo number_format($subtotal, 0); ?></td>
+        </tr>
+        <tr>
+            <td>CGST (9%)</td>
+            <td style="text-align: right;">Rs. <?php echo number_format($total_cgst, 2); ?></td>
+        </tr>
+        <tr>
+            <td>SGST (9%)</td>
+            <td style="text-align: right;">Rs. <?php echo number_format($total_sgst, 2); ?></td>
+        </tr>
+        <tr class="grand-total">
+            <td>Grand Total</td>
+            <td style="text-align: right;">Rs. <?php echo number_format($grand_total, 2); ?></td>
+        </tr>
+    </table>
+
+    <div class="footer">
+        Thank you for shopping with Neelkanth!
     </div>
 </div>
-
-<script>
-    // Auto open print dialog when page loads
-    window.onload = function() {
-        window.print();
-    }
-</script>
 
 </body>
 </html>

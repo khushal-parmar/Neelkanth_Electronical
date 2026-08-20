@@ -12,6 +12,26 @@ if (session_status() === PHP_SESSION_NONE) {
     
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        /* Google Translate Top Header Bar Hide */
+        .goog-te-banner-frame, .skiptranslate, iframe.goog-te-banner-frame { display: none !important; }
+        body { top: 0px !important; }
+        .goog-text-highlight { background-color: transparent !important; box-shadow: none !important; }
+        
+        /* Custom Select Style */
+        .lang-select {
+            border: 1px solid #ced4da;
+            border-radius: 6px;
+            padding: 4px 8px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            color: #333;
+            background-color: #fff;
+            cursor: pointer;
+            outline: none;
+        }
+    </style>
 </head>
 <body>
 
@@ -40,6 +60,14 @@ if (session_status() === PHP_SESSION_NONE) {
                     <i class="fa-solid fa-cart-shopping"></i>
                 </a>
 
+                <!-- Custom Language Selector Dropdown -->
+                <div class="me-2">
+                    <select class="lang-select" onchange="changeLanguage(this.value)">
+                        <option value="en">🌐 English</option>
+                        <option value="gu">🌐 ગુજરાતી</option>
+                    </select>
+                </div>
+
                 <?php if (isset($_SESSION['user_id'])): ?>
                     <a href="profile.php" class="btn btn-primary fw-semibold d-flex align-items-center gap-2">
                         <i class="fa-solid fa-user"></i> 
@@ -57,4 +85,40 @@ if (session_status() === PHP_SESSION_NONE) {
     </div>
 </nav>
 
+<!-- Hidden Google Translate Element -->
+<div id="google_translate_element" style="display:none;"></div>
+
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+<script type="text/javascript">
+function googleTranslateElementInit() {
+    new google.translate.TranslateElement({
+        pageLanguage: 'en',
+        includedLanguages: 'en,gu',
+        autoDisplay: false
+    }, 'google_translate_element');
+}
+
+function changeLanguage(langCode) {
+    document.cookie = "googtrans=/en/" + langCode + "; path=/";
+    document.cookie = "googtrans=/en/" + langCode + "; domain=" + window.location.hostname + "; path=/";
+    location.reload();
+}
+
+// Auto select existing language on page reload
+window.addEventListener('DOMContentLoaded', () => {
+    let cookies = document.cookie.split(';');
+    for (let i = 0; i < cookies.length; i++) {
+        let cookie = cookies[i].trim();
+        if (cookie.startsWith("googtrans=")) {
+            let selectBox = document.querySelector('.lang-select');
+            if (cookie.includes("/gu") && selectBox) {
+                selectBox.value = "gu";
+            } else if (selectBox) {
+                selectBox.value = "en";
+            }
+        }
+    }
+});
+</script>
+<script type="text/javascript" src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>

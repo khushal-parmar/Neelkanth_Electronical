@@ -1,5 +1,13 @@
 <?php
+ini_set('session.cookie_lifetime', 0);
+ini_set('session.gc_maxlifetime', 0);
 session_start();
+
+if (!isset($_SESSION['admin_logged_in']) || $_SESSION['admin_logged_in'] !== true) {
+    header("Location: login.php");
+    exit();
+}
+
 require_once '../config/db.php';
 $sql = "SELECT * FROM products ORDER BY id DESC";
 $result = $conn->query($sql);
@@ -81,7 +89,7 @@ $result = $conn->query($sql);
 <div class="admin-wrapper">
     <aside class="sidebar">
         <div>
-            <a href="dashboard.php" class="sidebar-brand">
+            <a href="products.php" class="sidebar-brand">
                 <i class="fa-solid fa-bolt text-warning"></i> Neelkanth
             </a>
             <ul class="sidebar-menu">

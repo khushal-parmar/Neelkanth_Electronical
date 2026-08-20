@@ -3,11 +3,11 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
-header("Cache-Control: no-cache, no-store, must-revalidate"); // HTTP 1.1
-header("Pragma: no-cache"); // HTTP 1.0
-header("Expires: 0"); // Proxies
+header("Cache-Control: no-cache, no-store, must-revalidate");
+header("Pragma: no-cache");
+header("Expires: 0");
 
-if (!isset($_SESSION['admin_id'])) { // અથવા તમારા admin session નું નામ
+if (!isset($_SESSION['admin_id']) && !isset($_SESSION['admin']) && !isset($_SESSION['admin_logged_in'])) {
     header("Location: login.php");
     exit();
 }

@@ -33,7 +33,7 @@ require_once 'config/db.php';
     .category-card {
         background: #ffffff;
         border-radius: 12px;
-        padding: 30px 20px 20px;
+        padding: 25px 15px 15px;
         text-align: center;
         border: 1px solid #f1f5f9;
         box-shadow: 0 2px 10px rgba(0, 0, 0, 0.03);
@@ -86,37 +86,82 @@ require_once 'config/db.php';
 
     .btn-view-products:hover {
         background-color: #2563eb;
-        color: #ffffff;
+        color: #ffffff !important;
+    }
+
+    @media (max-width: 767px) {
+        .page-container {
+            padding: 35px 0 !important;
+        }
+        .category-img-wrapper {
+            height: 120px !important;
+        }
+        .category-card {
+            padding: 15px 10px 12px !important;
+        }
+        .category-name {
+            font-size: 0.95rem !important;
+            margin-bottom: 10px !important;
+        }
+        .btn-view-products {
+            font-size: 0.8rem !important;
+            padding: 6px 0 !important;
+        }
     }
 </style>
 
 <div class="page-container">
     <div class="container">
-        <div class="mb-4">
+        <div class="mb-4 text-sm-start text-center">
             <h2 class="section-title">Shop By Category</h2>
         </div>
 
-        <div class="row g-4">
+        <div class="row g-3 g-md-4">
             <?php
-            $categories = ['Blender', 'Mixer Grinder', 'Fan', 'Iron'];
+            $categories = [
+                [
+                    'name' => 'Blender', 
+                    'file' => 'blender',
+                    'fallback' => 'https://m.media-amazon.com/images/I/61S3yB9S7LL._SL1500_.jpg'
+                ],
+                [
+                    'name' => 'Mixer Grinder', 
+                    'file' => 'mixer',
+                    'fallback' => 'https://m.media-amazon.com/images/I/61NfTee8x-L._SL1200_.jpg'
+                ],
+                [
+                    'name' => 'Fan', 
+                    'file' => 'fan',
+                    'fallback' => 'https://m.media-amazon.com/images/I/61aMvFClc1L._SL1500_.jpg'
+                ],
+                [
+                    'name' => 'Iron', 
+                    'file' => 'iron',
+                    'fallback' => 'https://m.media-amazon.com/images/I/71P4qZ1wQXL._SL1500_.jpg'
+                ]
+            ];
 
-            foreach ($categories as $cat_name):
-                $stmt = $conn->prepare("SELECT image FROM products WHERE category = ? AND image != '' ORDER BY id DESC LIMIT 1");
-                $stmt->bind_param("s", $cat_name);
-                $stmt->execute();
-                $result = $stmt->get_result();
-                $product = $result->fetch_assoc();
+            foreach ($categories as $cat):
+                $cat_name = $cat['name'];
+                $cat_file = $cat['file'];
+                $cat_fallback = $cat['fallback'];
 
-                if ($product && !empty($product['image']) && file_exists('uploads/' . $product['image'])) {
-                    $cat_img = 'uploads/' . $product['image'];
-                } else {
-                    $cat_img = 'https://via.placeholder.com/200?text=' . urlencode($cat_name);
+                $cat_img = $cat_fallback;
+                if (file_exists("assets/images/{$cat_file}.png")) {
+                    $cat_img = "assets/images/{$cat_file}.png";
+                } elseif (file_exists("assets/images/{$cat_file}.jpg")) {
+                    $cat_img = "assets/images/{$cat_file}.jpg";
+                } elseif (file_exists("assets/images/{$cat_file}.jpeg")) {
+                    $cat_img = "assets/images/{$cat_file}.jpeg";
                 }
             ?>
-                <div class="col-xl-3 col-lg-3 col-md-6 col-sm-6">
+                <div class="col-xl-3 col-lg-3 col-md-6 col-6">
                     <div class="category-card">
                         <div class="category-img-wrapper">
-                            <img src="<?php echo $cat_img; ?>" alt="<?php echo htmlspecialchars($cat_name); ?>" class="img-fluid">
+                            <img src="<?php echo $cat_img; ?>" 
+                                 onerror="this.onerror=null; this.src='<?php echo $cat_fallback; ?>';" 
+                                 alt="<?php echo htmlspecialchars($cat_name); ?>" 
+                                 class="img-fluid">
                         </div>
                         <div>
                             <h3 class="category-name"><?php echo htmlspecialchars($cat_name); ?></h3>

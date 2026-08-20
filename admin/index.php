@@ -1,102 +1,163 @@
-<?php 
-require_once '../config/db.php';
-include 'sidebar.php'; 
+<?php
+ini_set('session.cookie_lifetime', 0);
+ini_set('session.gc_maxlifetime', 0);
+session_start();
 
-if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['add_product'])) {
-    $name = $_POST['name'];
-    $category = $_POST['category'];
-    $price = $_POST['price'];
-    $description = $_POST['description'];
-    
-    // Image Handling
-    $image_name = $_FILES['image']['name'];
-    if(!empty($image_name)){
-        $target = "../assets/images/" . basename($image_name);
-        move_uploaded_file($_FILES['image']['tmp_name'], $target);
-    } else {
-        $image_name = "default.jpg";
-    }
-
-    $stmt = $conn->prepare("INSERT INTO products (name, category, price, description, image) VALUES (?, ?, ?, ?, ?)");
-    $stmt->bind_param("ssdss", $name, $category, $price, $description, $image_name);
-    $stmt->execute();
-    $stmt->close();
+if (!isset($_SESSION['admin_logged_in']) || $_SESSION['admin_logged_in'] !== true) {
+    header("Location: login.php");
+    exit();
 }
 
-$products = $conn->query("SELECT * FROM products ORDER BY id DESC LIMIT 10");
+require_once '../config/db.php';
+$sql = "SELECT * FROM products ORDER BY id DESC";
+$result = $conn->query($sql);
 ?>
 
-<h2 class="fw-bold mb-4">Manage Electronics</h2>
-
-<div class="card border-0 shadow-sm p-4 mb-4 rounded-3">
-    <h5 class="mb-3"><i class="fas fa-plus me-2"></i>Add New Product</h5>
-    <form action="index.php" method="POST" enctype="multipart/form-data">
-        <div class="row g-3">
-            <div class="col-md-4">
-                <input type="text" name="name" class="form-control" placeholder="e.g. Bajaj 500W Mixer" required>
-            </div>
-            <div class="col-md-4">
-                <select name="category" class="form-select">
-                    <option value="Blender">Blender</option>
-                    <option value="Wiring">Wiring</option>
-                    <option value="Lighting">Lighting</option>
-                    <option value="Appliances">Appliances</option>
-                </select>
-            </div>
-            <div class="col-md-4">
-                <input type="number" step="0.01" name="price" class="form-control" placeholder="e.g. 1500" required>
-            </div>
-            <div class="col-12">
-                <textarea name="description" class="form-control" rows="3" placeholder="Enter product details..."></textarea>
-            </div>
-            <div class="col-md-8">
-                <input type="file" name="image" class="form-control">
-            </div>
-            <div class="col-md-4">
-                <div class="border rounded p-2 text-center text-muted bg-light">No Image</div>
-            </div>
-            <div class="col-12">
-                <button type="submit" name="add_product" class="btn btn-primary px-4">Add Product</button>
-            </div>
-        </div>
-    </form>
-</div>
-
-<div class="card border-0 shadow-sm p-4 rounded-3">
-    <div class="d-flex justify-content-between align-items-center mb-3">
-        <h5 class="mb-0">Product Inventory</h5>
-        <div>
-            <span class="me-2 text-muted">Show</span>
-            <select class="form-select d-inline-block w-auto"><option>Latest 10</option></select>
-        </div>
-    </div>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage Products - Admin Panel</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
-    <table class="table table-hover align-middle">
-        <thead class="table-light">
-            <tr>
-                <th>Image</th>
-                <th>Name</th>
-                <th>Category</th>
-                <th>Price</th>
-                <th>Action</th>
-            </tr>
-        </thead>
-        <tbody>
-            <?php if ($products && $products->num_rows > 0): ?>
-                <?php while($row = $products->fetch_assoc()): ?>
-                    <tr>
-                        <td><img src="../assets/images/<?php echo $row['image']; ?>" width="50" class="rounded"></td>
-                        <td><?php echo $row['name']; ?></td>
-                        <td><?php echo $row['category'] ?? 'General'; ?></td>
-                        <td>₹<?php echo $row['price']; ?></td>
-                        <td><button class="btn btn-sm btn-outline-danger">Delete</button></td>
-                    </tr>
-                <?php endwhile; ?>
+    <style>
+        body { background-color: #f8fafc; overflow-x: hidden; }
+
+        .admin-wrapper { display: flex; height: 100vh; overflow: hidden; }
+
+        .sidebar {
+            width: 260px;
+            background-color: #1e293b;
+            color: #ffffff;
+            flex-shrink: 0;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 20px 0;
+        }
+
+        .sidebar-brand {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #ffffff;
+            padding: 0 24px 20px;
+            border-bottom: 1px solid #334155;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .sidebar-menu { list-style: none; padding: 20px 12px; margin: 0; }
+        .sidebar-menu li { margin-bottom: 6px; }
+
+        .sidebar-menu a {
+            color: #94a3b8;
+            text-decoration: none;
+            padding: 12px 16px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+
+        .sidebar-menu a:hover, .sidebar-menu a.active {
+            background-color: #2563eb;
+            color: #ffffff;
+        }
+
+        .main-content { flex-grow: 1; overflow-y: auto; padding: 30px; height: 100vh; }
+
+        .card-custom {
+            background: #ffffff;
+            border-radius: 12px;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            padding: 24px;
+        }
+
+        .table th { background-color: #f8fafc; color: #475569; font-weight: 600; }
+        .product-img { width: 50px; height: 50px; object-fit: cover; border-radius: 8px; }
+    </style>
+</head>
+<body>
+
+<div class="admin-wrapper">
+    <aside class="sidebar">
+        <div>
+            <a href="products.php" class="sidebar-brand">
+                <i class="fa-solid fa-bolt text-warning"></i> Neelkanth
+            </a>
+            <ul class="sidebar-menu">
+                <li><a href="products.php" class="active"><i class="fa-solid fa-box"></i> Products</a></li>
+                <li><a href="orders.php"><i class="fa-solid fa-cart-shopping"></i> Orders</a></li>
+                <li><a href="users.php"><i class="fa-solid fa-users"></i> Users</a></li>
+                <li><a href="inquiries.php"><i class="fa-solid fa-phone"></i> Inquiries</a></li>
+            </ul>
+        </div>
+        <div class="px-3">
+            <a href="logout.php" class="btn btn-outline-danger w-100 d-flex align-items-center justify-content-center gap-2">
+                <i class="fa-solid fa-right-from-bracket"></i> Logout
+            </a>
+        </div>
+    </aside>
+
+    <main class="main-content">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2 class="fw-bold text-dark m-0">Products List</h2>
+            <a href="add-product.php" class="btn btn-primary fw-semibold">
+                <i class="fa-solid fa-plus me-1"></i> Add New Product
+            </a>
+        </div>
+
+        <div class="card-custom">
+            <?php if ($result && $result->num_rows > 0): ?>
+                <div class="table-responsive">
+                    <table class="table align-middle">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Image</th>
+                                <th>Title</th>
+                                <th>Price</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php while ($row = $result->fetch_assoc()): ?>
+                                <tr>
+                                    <td class="fw-bold">#<?php echo $row['id']; ?></td>
+                                    <td>
+                                        <?php if(!empty($row['image'])): ?>
+                                            <img src="../uploads/<?php echo htmlspecialchars($row['image']); ?>" class="product-img" alt="product">
+                                        <?php else: ?>
+                                            <div class="product-img bg-light d-flex align-items-center justify-content-center text-muted">No Img</div>
+                                        <?php endif; ?>
+                                    </td>
+                                    <td class="fw-semibold text-dark"><?php echo htmlspecialchars($row['title'] ?? $row['name'] ?? 'N/A'); ?></td>
+                                    <td class="text-primary fw-bold">₹<?php echo number_format($row['price'], 2); ?></td>
+                                    <td>
+                                        <a href="edit-product.php?id=<?php echo $row['id']; ?>" class="btn btn-sm btn-outline-primary me-1"><i class="fa-solid fa-pen"></i></a>
+                                        <a href="delete-product.php?id=<?php echo $row['id']; ?>" class="btn btn-sm btn-outline-danger" onclick="return confirm('Are you sure?');"><i class="fa-solid fa-trash"></i></a>
+                                    </td>
+                                </tr>
+                            <?php endwhile; ?>
+                        </tbody>
+                    </table>
+                </div>
             <?php else: ?>
-                <tr><td colspan="5" class="text-center text-muted py-4">No products found.</td></tr>
+                <div class="text-center py-4 text-muted">
+                    <i class="fa-solid fa-box-open fs-1 mb-2"></i>
+                    <p class="mb-0">No products found.</p>
+                </div>
             <?php endif; ?>
-        </tbody>
-    </table>
+        </div>
+    </main>
 </div>
 
-</div></div></body></html>
+</body>
+</html>

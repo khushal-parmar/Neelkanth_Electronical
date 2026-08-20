@@ -37,11 +37,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $address = trim($_POST['address']);
     $city = trim($_POST['city']);
     $pincode = trim($_POST['pincode']);
-    $payment_method = trim($_POST['payment_method']);
 
     if (!empty($address) && !empty($city) && !empty($pincode)) {
-        $stmt = $conn->prepare("INSERT INTO orders (user_id, total_amount, address, city, pincode, payment_method, status) VALUES (?, ?, ?, ?, ?, ?, 'Pending')");
-        $stmt->bind_param("idssss", $user_id, $total_amount, $address, $city, $pincode, $payment_method);
+        $stmt = $conn->prepare("INSERT INTO orders (user_id, total_amount, address, city, pincode, status) VALUES (?, ?, ?, ?, ?, 'Pending')");
+      $stmt->bind_param("idsss", $user_id, $total_amount, $address, $city, $pincode);
         
         if ($stmt->execute()) {
             $order_id = $stmt->insert_id;
@@ -150,14 +149,7 @@ include 'includes/header.php';
                                     <input type="text" name="pincode" class="form-control custom-input" placeholder="362001" pattern="[0-9]{6}" required>
                                 </div>
                             </div>
-
-                            <h4 class="fw-bold my-4 text-dark">Payment Method</h4>
-                            <div class="form-check p-3 border rounded-3 bg-light">
-                                <input class="form-check-input ms-0 me-2" type="radio" name="payment_method" value="COD" id="cod" checked>
-                                <label class="form-check-label fw-semibold text-dark" for="cod">
-                                    Cash on Delivery (COD)
-                                </label>
-                            </div>
+ 
                         </div>
                     </div>
 

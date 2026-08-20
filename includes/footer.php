@@ -39,8 +39,14 @@
                 <h5 class="footer-title">Follow Us</h5>
                 <div class="d-flex gap-3 social-icons">
                     <a href="#" aria-label="Facebook" class="social-btn facebook"><i class="fa-brands fa-facebook-f"></i></a>
-                    <a href="#" aria-label="Instagram" class="social-btn instagram"><i class="fa-brands fa-instagram"></i></a>
-                    <a href="#" aria-label="WhatsApp" class="social-btn whatsapp"><i class="fa-brands fa-whatsapp"></i></a>
+                    <a href="https://www.instagram.com/neelkanth_electric_junagadh?igsh=MThkc2dvczVmcDE2MQ%3D%3D" aria-label="Instagram" class="social-btn instagram"><i class="fa-brands fa-instagram"></i></a>
+                   <!-- Footer માં આ રીતે વોટ્સએપ લિંક મૂકો -->
+<a href="https://wa.me/919913550501?text=Hello,%20I%20have%20a%20query%20regarding%20your%20products." 
+   target="_blank" 
+   class="text-decoration-none text-light d-inline-flex align-items-center gap-2">
+    <i class="fa-brands fa-whatsapp text-success fs-4"></i>
+    <span>+91 99135 50501</span>
+</a>
                 </div>
             </div>
         </div>

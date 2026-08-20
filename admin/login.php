@@ -1,5 +1,13 @@
 <?php
+ini_set('session.cookie_lifetime', 0);
+ini_set('session.gc_maxlifetime', 0);
 session_start();
+
+if (isset($_SESSION['admin_logged_in']) && $_SESSION['admin_logged_in'] === true) {
+    header("Location: products.php");
+    exit();
+}
+
 require_once '../config/db.php';
 $error = "";
 
@@ -16,8 +24,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         if (password_verify($password, $row['password']) || $password === 'password123') {
             $_SESSION['admin_logged_in'] = true;
             $_SESSION['admin_user'] = $row['username'];
-            header("Location:products.php");
-            exit;
+            header("Location: products.php");
+            exit();
         } else {
             $error = "Invalid Password";
         }
@@ -58,9 +66,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         <button type="submit" class="btn btn-primary w-100 py-2 fw-bold">Login</button>
     </form>
     <div class="text-center mt-3">
-    <small class="text-muted">Don't have an account? <a href="register.php" class="text-decoration-none fw-bold">Create Account</a></small>
-</div>
-     
+        <small class="text-muted">Don't have an account? <a href="register.php" class="text-decoration-none fw-bold">Create Account</a></small>
+    </div>
 </div>
 
 </body>

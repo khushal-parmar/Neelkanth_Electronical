@@ -99,6 +99,11 @@ $selected_category = isset($_GET['category']) ? strtolower(trim($_GET['category'
         width: 100%;
         height: 100%;
         object-fit: cover;
+        transition: transform 0.3s ease;
+    }
+
+    .product-img-box:hover img {
+        transform: scale(1.05);
     }
 
     .product-info-head {
@@ -113,6 +118,11 @@ $selected_category = isset($_GET['category']) ? strtolower(trim($_GET['category'
         font-weight: 700;
         color: #0f172a;
         margin: 0;
+        text-decoration: none;
+    }
+
+    .product-title:hover {
+        color: #2563eb;
     }
 
     .product-price {
@@ -144,7 +154,7 @@ $selected_category = isset($_GET['category']) ? strtolower(trim($_GET['category'
         text-transform: uppercase;
         transition: all 0.2s ease;
         text-decoration: none;
-        display: text-center;
+        display: block;
         text-align: center;
     }
 
@@ -192,11 +202,15 @@ $selected_category = isset($_GET['category']) ? strtolower(trim($_GET['category'
                     <div class="col-xl-3 col-lg-3 col-md-6 col-sm-6">
                         <div class="product-card">
                             <div>
-                                <div class="product-img-box">
-                                    <img src="<?php echo $p_img; ?>" alt="<?php echo htmlspecialchars($product['name']); ?>">
-                                </div>
+                                <a href="product_details.php?id=<?php echo $product['id']; ?>" class="d-block text-decoration-none">
+                                    <div class="product-img-box">
+                                        <img src="<?php echo $p_img; ?>" alt="<?php echo htmlspecialchars($product['name']); ?>">
+                                    </div>
+                                </a>
                                 <div class="product-info-head">
-                                    <h3 class="product-title"><?php echo htmlspecialchars($product['name']); ?></h3>
+                                    <a href="product_details.php?id=<?php echo $product['id']; ?>" class="product-title">
+                                        <?php echo htmlspecialchars($product['name']); ?>
+                                    </a>
                                     <span class="product-price">₹<?php echo htmlspecialchars($product['price']); ?></span>
                                 </div>
                                 <span class="product-category-text"><?php echo htmlspecialchars($product['category']); ?></span>

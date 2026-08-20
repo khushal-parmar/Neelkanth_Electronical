@@ -6,6 +6,23 @@ if (!isset($_SESSION['cart'])) {
     $_SESSION['cart'] = [];
 }
 
+// POST Method (Forms/AJAX through Product Details page)
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['product_id'])) {
+    $product_id = intval($_POST['product_id']);
+    $quantity = isset($_POST['quantity']) ? intval($_POST['quantity']) : 1;
+
+    if ($product_id > 0) {
+        if (isset($_SESSION['cart'][$product_id])) {
+            $_SESSION['cart'][$product_id] += $quantity;
+        } else {
+            $_SESSION['cart'][$product_id] = $quantity;
+        }
+    }
+    header("Location: cart.php");
+    exit();
+}
+
+// GET Method (Direct links)
 if (isset($_GET['action'])) {
     $action = $_GET['action'];
     $product_id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
@@ -52,17 +69,19 @@ $cart_products = [];
 $total_amount = 0;
 
 if (!empty($_SESSION['cart'])) {
-    $ids = implode(',', array_keys($_SESSION['cart']));
+    $ids = implode(',', array_map('intval', array_keys($_SESSION['cart'])));
     $result = $conn->query("SELECT * FROM products WHERE id IN ($ids)");
     
-    while ($row = $result->fetch_assoc()) {
-        $qty = $_SESSION['cart'][$row['id']];
-        $subtotal = $row['price'] * $qty;
-        $total_amount += $subtotal;
-        
-        $row['qty'] = $qty;
-        $row['subtotal'] = $subtotal;
-        $cart_products[] = $row;
+    if ($result) {
+        while ($row = $result->fetch_assoc()) {
+            $qty = $_SESSION['cart'][$row['id']];
+            $subtotal = $row['price'] * $qty;
+            $total_amount += $subtotal;
+            
+            $row['qty'] = $qty;
+            $row['subtotal'] = $subtotal;
+            $cart_products[] = $row;
+        }
     }
 }
 ?>
@@ -125,6 +144,8 @@ if (!empty($_SESSION['cart'])) {
         width: 60px;
         height: 60px;
         object-fit: contain;
+        border-radius: 6px;
+        background-color: #f8fafc;
     }
 
     .qty-btn {
@@ -213,7 +234,10 @@ if (!empty($_SESSION['cart'])) {
                                         <tr>
                                             <td>
                                                 <div class="d-flex align-items-center gap-3">
-                                                    <img src="assets/images/products/<?php echo htmlspecialchars($item['image']); ?>" class="cart-img" alt="<?php echo htmlspecialchars($item['name']); ?>">
+                                                    <img src="uploads/<?php echo htmlspecialchars($item['image']); ?>" 
+                                                         onerror="this.onerror=null; this.src='assets/images/hero-banner.jpg';" 
+                                                         class="cart-img" 
+                                                         alt="<?php echo htmlspecialchars($item['name']); ?>">
                                                     <span class="fw-semibold"><?php echo htmlspecialchars($item['name']); ?></span>
                                                 </div>
                                             </td>
