@@ -89,7 +89,7 @@ if (session_status() === PHP_SESSION_NONE) {
 <div id="google_translate_element" style="display:none;"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-
+                    
 <script type="text/javascript">
 function googleTranslateElementInit() {
     new google.translate.TranslateElement({
